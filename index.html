@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Air Quality Monitoring Dashboard - Color Coded Suggestions</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Montserrat',sans-serif;}
+body,html{height:100%;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:white;overflow-x:hidden;}
+
+.dashboard{max-width:1100px;margin:40px auto;padding:20px;backdrop-filter:blur(20px);background:rgba(10,25,45,0.75);border-radius:20px;box-shadow:0 12px 36px rgba(0,0,0,0.5);display:flex;gap:30px;flex-wrap:wrap;}
+
+.aqi-main{flex:2 1 600px;backdrop-filter:blur(30px);background:rgba(20,40,70,0.8);border-radius:20px;padding:30px 40px;display:flex;flex-direction:column;gap:25px;box-shadow:0 12px 36px rgba(0,0,0,0.7);}
+.aqi-header{display:flex;justify-content:space-between;align-items:center;}
+.city{font-size:2.4rem;font-weight:700;color:#e0eafc;}
+.date{font-size:1rem;font-weight:300;color:#a0b8d4;}
+.aqi-value{font-size:5.2rem;font-weight:800;display:flex;align-items:center;gap:10px;color:#f0f7ff;}
+.aqi-unit{font-size:2.2rem;font-weight:600;}
+.aqi-status{font-weight:600;font-size:1.4rem;padding:8px 20px;border-radius:30px;width:fit-content;text-shadow:0 0 4px rgba(0,0,0,0.3);}
+
+.good{background:#4CAF50;}
+.moderate{background:#FFEB3B;color:#000;}
+.unhealthy-s{background:#FF9800;}
+.unhealthy{background:#F44336;}
+.very-unhealthy{background:#9C27B0;}
+.hazardous{background:#7E0000;}
+
+.pollutants-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:24px;}
+.pollutant-box{background:rgba(255 255 255 / 0.12);border-radius:18px;padding:20px 25px;font-weight:600;color:#dbe9ff;box-shadow:inset 0 0 20px rgba(255 255 255 / 0.1);display:flex;flex-direction:column;gap:14px;user-select:none;transition:background 0.3s ease;}
+.pollutant-box:hover{background:rgba(255 255 255 / 0.2);}
+.pollutant-name{font-weight:700;font-size:1.1rem;letter-spacing:0.05em;color:#b8d1ff;}
+.pollutant-value{font-size:2.2rem;color:#f5faff;}
+.battery-bar{position:relative;height:18px;width:100%;background:rgba(255 255 255 / 0.15);border-radius:12px;overflow:hidden;box-shadow:inset 0 0 5px rgba(255 255 255 / 0.25);}
+.battery-fill{height:100%;width:0%;border-radius:12px 0 0 12px;background:linear-gradient(90deg,#4CAF50,#FFEB3B,#FF9800,#F44336,#7E0000);box-shadow:0 0 6px rgba(0,0,0,0.4);transition:width 0.6s ease;}
+
+.forecast-panel{flex:1 1 320px;backdrop-filter:blur(30px);background:rgba(20,40,70,0.85);border-radius:20px;padding:30px 30px;box-shadow:0 12px 36px rgba(0,0,0,0.7);color:#e0eafc;}
+.forecast-title{font-weight:700;font-size:1.85rem;margin-bottom:24px;color:#b2c7ff;}
+.forecast-day{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding:16px 20px;background:rgba(255 255 255 /0.1);border-radius:18px;user-select:none;transition:background 0.3s ease;}
+.forecast-day:hover{background:rgba(255 255 255 /0.22);}
+.forecast-day .date{font-weight:600;font-size:1.1rem;color:#cbd5ff;}
+.forecast-day .aqi{font-weight:700;font-size:1.25rem;width:64px;text-align:center;padding:8px 14px;border-radius:24px;box-shadow:0 0 6px rgba(0,0,0,0.3);}
+.forecast-day .good{background:#4CAF50;color:#fff;}
+.forecast-day .moderate{background:#FFEB3B;color:#000;}
+.forecast-day .unhealthy-s{background:#FF9800;color:#fff;}
+.forecast-day .unhealthy{background:#F44336;color:#fff;}
+.forecast-day .very-unhealthy{background:#9C27B0;color:#fff;}
+.forecast-day .hazardous{background:#7E0000;color:#fff;}
+
+.suggestions{
+  margin-top:20px;padding:18px 22px;border-radius:18px;font-size:1.05rem;line-height:1.5;box-shadow:inset 0 0 15px rgba(255 255 255 / 0.15);
+}
+.suggestions h3{font-size:1.2rem;margin-bottom:10px;color:#b8d1ff;}
+.suggestions.good{background:rgba(76,175,80,0.2);color:#d4f5d4;}
+.suggestions.moderate{background:rgba(255,235,59,0.2);color:#333;}
+.suggestions.unhealthy-s{background:rgba(255,152,0,0.2);color:#fff;}
+.suggestions.unhealthy{background:rgba(244,67,54,0.2);color:#fff;}
+.suggestions.very-unhealthy{background:rgba(156,39,176,0.2);color:#fff;}
+.suggestions.hazardous{background:rgba(126,0,0,0.2);color:#fff;}
+
+@media(max-width:900px){.dashboard{flex-direction:column;padding:30px 20px;}.aqi-main,.forecast-panel{flex:unset;width:100%;}}
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+  <section class="aqi-main">
+    <div class="aqi-header">
+      <div class="city" id="cityName"></div>
+      <div class="date" id="currentDate"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:25px;">
+      <div>
+        <div class="aqi-value" id="aqiValue"></div>
+        <div id="aqiStatus" class="aqi-status"></div>
+      </div>
+      <div class="main-pollutant" style="font-weight:600;font-size:1.15rem;opacity:0.8;">
+        Main Pollutant: <span id="mainPollutant"></span>
+      </div>
+    </div>
+
+    <div class="pollutants-grid" id="pollutantsGrid"></div>
+
+    <!-- Color-coded suggestions -->
+    <div class="suggestions" id="suggestionsBox"></div>
+
+  </section>
+
+  <section class="forecast-panel">
+    <div class="forecast-title">5 Day AQI Forecast</div>
+    <div id="forecastContainer"></div>
+  </section>
+</div>
+
+<script>
+const aqiData={
+  city:"New York, US",
+  date:"Wednesday, Aug 27 11:32 AM",
+  aqi:180,
+  mainPollutant:"PM2.5",
+  pollutants:{"PM2.5":120,"PM10":90,"CO":1.2,"O3":45,"NO2":25,"SO2":10},
+  forecast:[{date:"Today",aqi:180},{date:"Thu, Aug 28",aqi:110},{date:"Fri, Aug 29",aqi:135},{date:"Sat, Aug 30",aqi:160},{date:"Sun, Aug 31",aqi:80}]
+};
+
+function pollutantToPercent(value,pollutant){
+  const maxValues={"PM2.5":150,"PM10":200,"CO":10,"O3":100,"NO2":100,"SO2":75};
+  let percent=(value/(maxValues[pollutant]||100))*100; if(percent>100)percent=100; return percent;
+}
+
+function getAQIStatus(aqi){
+  if(aqi<=50)return{status:"Good",class:"good"};
+  if(aqi<=100)return{status:"Moderate",class:"moderate"};
+  if(aqi<=150)return{status:"Unhealthy for Sensitive",class:"unhealthy-s"};
+  if(aqi<=200)return{status:"Unhealthy",class:"unhealthy"};
+  if(aqi<=300)return{status:"Very Unhealthy",class:"very-unhealthy"};
+  return{status:"Hazardous",class:"hazardous"};
+}
+
+function getSuggestions(aqi){
+  if(aqi<=50)return ["Air quality is good. You can go outside freely."];
+  if(aqi<=100)return ["Air quality is moderate. Sensitive groups should limit prolonged outdoor activity."];
+  if(aqi<=150)return ["Air quality is unhealthy for sensitive groups. Limit outdoor exertion and wear masks if needed."];
+  if(aqi<=200)return ["Air quality is unhealthy. Avoid outdoor activities. Use masks and air purifiers indoors."];
+  if(aqi<=300)return ["Air quality is very unhealthy. Stay indoors. Minimize physical exertion. Keep windows closed."];
+  return ["Air quality is hazardous. Stay indoors at all times. Use air filtration. Seek medical attention if needed."];
+}
+
+function populateDashboard(data){
+  document.getElementById("cityName").innerText=data.city;
+  document.getElementById("currentDate").innerText=data.date;
+  document.getElementById("aqiValue").innerText=data.aqi+" AQI";
+  const statusObj=getAQIStatus(data.aqi);
+  const statusEl=document.getElementById("aqiStatus");
+  statusEl.innerText=statusObj.status;
+  statusEl.className="aqi-status "+statusObj.class;
+  document.getElementById("mainPollutant").innerText=data.mainPollutant;
+
+  const pollutantsGrid=document.getElementById("pollutantsGrid");
+  pollutantsGrid.innerHTML="";
+  for(const[name,val] of Object.entries(data.pollutants)){
+    const percent=pollutantToPercent(val,name);
+    pollutantsGrid.innerHTML+=`
+      <div class="pollutant-box">
+        <div class="pollutant-name">${name}</div>
+        <div class="pollutant-value">${val}</div>
+        <div class="battery-bar"><div class="battery-fill" style="width:${percent}%"></div></div>
+      </div>`;
+  }
+
+  const suggestionsBox=document.getElementById("suggestionsBox");
+  const suggestions=getSuggestions(data.aqi);
+  suggestionsBox.className="suggestions "+statusObj.class;
+  suggestionsBox.innerHTML="<h3>Suggestions:</h3><ul>"+suggestions.map(s=>`<li>${s}</li>`).join("")+"</ul>";
+
+  const forecastContainer=document.getElementById("forecastContainer");
+  forecastContainer.innerHTML="";
+  data.forecast.forEach(day=>{
+    const s=getAQIStatus(day.aqi);
+    forecastContainer.innerHTML+=`
+      <div class="forecast-day">
+        <div class="date">${day.date}</div>
+        <div class="aqi ${s.class}">${day.aqi}</div>
+      </div>`;
+  });
+}
+
+populateDashboard(aqiData);
+</script>
+<script src="script.js"></script>
+</body>
+</html>
